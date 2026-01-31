@@ -30,4 +30,9 @@ public class DeckService {
                 .map(DeckResponseDto::new)
                 .collect(Collectors.toList());
     }
+
+    @Transactional
+    public void deleteDeck(Long id) {
+        deckRepository.deleteById(id);
+    }
 }
