@@ -1,8 +1,8 @@
-package com.rememberfit.backend.controller;
+package com.rememberfit.backend.domain.deck.controller;
 
-import com.rememberfit.backend.dto.DeckRequestDto;
-import com.rememberfit.backend.dto.DeckResponseDto;
-import com.rememberfit.backend.service.DeckService;
+import com.rememberfit.backend.domain.deck.dto.DeckRequestDto;
+import com.rememberfit.backend.domain.deck.dto.DeckResponseDto;
+import com.rememberfit.backend.domain.deck.service.DeckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

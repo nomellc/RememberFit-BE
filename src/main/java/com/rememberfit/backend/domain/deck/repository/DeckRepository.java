@@ -1,6 +1,6 @@
-package com.rememberfit.backend.repository;
+package com.rememberfit.backend.domain.deck.repository;
 
-import com.rememberfit.backend.entity.Deck;
+import com.rememberfit.backend.domain.deck.entity.Deck;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

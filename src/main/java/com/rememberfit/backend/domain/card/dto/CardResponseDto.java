@@ -1,6 +1,6 @@
-package com.rememberfit.backend.dto;
+package com.rememberfit.backend.domain.card.dto;
 
-import com.rememberfit.backend.entity.Card;
+import com.rememberfit.backend.domain.card.entity.Card;
 import lombok.Getter;
 
 @Getter

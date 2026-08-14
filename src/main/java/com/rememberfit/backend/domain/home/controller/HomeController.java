@@ -1,7 +1,7 @@
-package com.rememberfit.backend.controller;
+package com.rememberfit.backend.domain.home.controller;
 
-import com.rememberfit.backend.dto.HomeStatsResponseDto;
-import com.rememberfit.backend.service.HomeService;
+import com.rememberfit.backend.domain.home.dto.HomeStatsResponseDto;
+import com.rememberfit.backend.domain.home.service.HomeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

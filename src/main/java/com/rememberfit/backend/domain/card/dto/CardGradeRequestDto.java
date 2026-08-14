@@ -1,4 +1,4 @@
-package com.rememberfit.backend.dto;
+package com.rememberfit.backend.domain.card.dto;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

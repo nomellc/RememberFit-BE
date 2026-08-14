@@ -1,6 +1,6 @@
-package com.rememberfit.backend.utils;
+package com.rememberfit.backend.global.utils;
 
-import com.rememberfit.backend.entity.Card;
+import com.rememberfit.backend.domain.card.entity.Card;
 
 public class SM2Utils {
     // 계산 결과를 담아서 돌려줄 박스

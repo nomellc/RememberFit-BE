@@ -1,10 +1,9 @@
-package com.rememberfit.backend.controller;
+package com.rememberfit.backend.domain.card.controller;
 
-import com.rememberfit.backend.dto.CardGradeRequestDto;
-import com.rememberfit.backend.dto.CardRequestDto;
-import com.rememberfit.backend.dto.CardResponseDto;
-import com.rememberfit.backend.entity.Card;
-import com.rememberfit.backend.service.CardService;
+import com.rememberfit.backend.domain.card.dto.CardGradeRequestDto;
+import com.rememberfit.backend.domain.card.dto.CardRequestDto;
+import com.rememberfit.backend.domain.card.dto.CardResponseDto;
+import com.rememberfit.backend.domain.card.service.CardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,7 +1,7 @@
-package com.rememberfit.backend.service;
+package com.rememberfit.backend.domain.home.service;
 
-import com.rememberfit.backend.dto.HomeStatsResponseDto;
-import com.rememberfit.backend.repository.CardRepository;
+import com.rememberfit.backend.domain.home.dto.HomeStatsResponseDto;
+import com.rememberfit.backend.domain.card.repository.CardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

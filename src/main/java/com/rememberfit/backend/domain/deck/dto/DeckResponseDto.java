@@ -1,6 +1,6 @@
-package com.rememberfit.backend.dto;
+package com.rememberfit.backend.domain.deck.dto;
 
-import com.rememberfit.backend.entity.Deck;
+import com.rememberfit.backend.domain.deck.entity.Deck;
 import lombok.Getter;
 
 @Getter

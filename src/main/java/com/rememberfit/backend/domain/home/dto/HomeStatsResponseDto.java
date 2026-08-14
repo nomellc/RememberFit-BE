@@ -1,4 +1,4 @@
-package com.rememberfit.backend.dto;
+package com.rememberfit.backend.domain.home.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

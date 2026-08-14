@@ -1,6 +1,6 @@
-package com.rememberfit.backend.repository;
+package com.rememberfit.backend.domain.card.repository;
 
-import com.rememberfit.backend.entity.Card;
+import com.rememberfit.backend.domain.card.entity.Card;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

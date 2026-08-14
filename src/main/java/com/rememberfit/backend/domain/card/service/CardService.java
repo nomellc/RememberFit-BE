@@ -1,12 +1,12 @@
-package com.rememberfit.backend.service;
+package com.rememberfit.backend.domain.card.service;
 
-import com.rememberfit.backend.dto.CardRequestDto;
-import com.rememberfit.backend.dto.CardResponseDto;
-import com.rememberfit.backend.entity.Card;
-import com.rememberfit.backend.entity.Deck;
-import com.rememberfit.backend.repository.CardRepository;
-import com.rememberfit.backend.repository.DeckRepository;
-import com.rememberfit.backend.utils.SM2Utils;
+import com.rememberfit.backend.domain.card.dto.CardRequestDto;
+import com.rememberfit.backend.domain.card.dto.CardResponseDto;
+import com.rememberfit.backend.domain.card.entity.Card;
+import com.rememberfit.backend.domain.deck.entity.Deck;
+import com.rememberfit.backend.domain.card.repository.CardRepository;
+import com.rememberfit.backend.domain.deck.repository.DeckRepository;
+import com.rememberfit.backend.global.utils.SM2Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

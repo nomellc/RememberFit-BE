@@ -1,9 +1,9 @@
-package com.rememberfit.backend.service;
+package com.rememberfit.backend.domain.deck.service;
 
-import com.rememberfit.backend.dto.DeckRequestDto;
-import com.rememberfit.backend.dto.DeckResponseDto;
-import com.rememberfit.backend.entity.Deck;
-import com.rememberfit.backend.repository.DeckRepository;
+import com.rememberfit.backend.domain.deck.dto.DeckRequestDto;
+import com.rememberfit.backend.domain.deck.dto.DeckResponseDto;
+import com.rememberfit.backend.domain.deck.entity.Deck;
+import com.rememberfit.backend.domain.deck.repository.DeckRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

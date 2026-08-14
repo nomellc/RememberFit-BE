@@ -1,5 +1,6 @@
-package com.rememberfit.backend.entity;
+package com.rememberfit.backend.domain.deck.entity;
 
+import com.rememberfit.backend.domain.card.entity.Card;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
