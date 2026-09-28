@@ -1,9 +1,11 @@
 package com.rememberfit.backend.domain.card.controller;
 
-import com.rememberfit.backend.domain.card.dto.CardGradeRequestDto;
 import com.rememberfit.backend.domain.card.dto.CardRequestDto;
 import com.rememberfit.backend.domain.card.dto.CardResponseDto;
 import com.rememberfit.backend.domain.card.service.CardService;
+import com.rememberfit.backend.global.response.ApiSuccess;
+import com.rememberfit.backend.global.response.SuccessCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,24 +18,36 @@ public class CardController {
     private final CardService cardService;
 
     @PostMapping("/{deckId}/cards")
-    public String createCard(@PathVariable Long deckId, @RequestBody CardRequestDto requestDto) {
-        cardService.createCard(deckId, requestDto);
-        return "카드 생성 성공!";
+    @ApiSuccess(SuccessCode.CARD_CREATED)
+    public CardResponseDto createCard(
+            @PathVariable Long deckId,
+            @Valid @RequestBody CardRequestDto requestDto
+    ) {
+        return cardService.createCard(deckId, requestDto);
     }
 
     @GetMapping("/{deckId}/cards")
+    @ApiSuccess(SuccessCode.CARDS_READ)
     public List<CardResponseDto> getCards(@PathVariable Long deckId) {
         return cardService.getCardsByDeckId(deckId);
     }
 
-    @PostMapping("/{deckId}/cards/{cardId}/grade")
-    public String gradeCard(@PathVariable Long cardId, @RequestBody CardGradeRequestDto requestDto, @PathVariable String deckId) {
-        cardService.gradeCard(cardId, requestDto.getQuality());
-        return "학습 기록 업데이트 완료!";
+    @PatchMapping("/{deckId}/cards/{cardId}")
+    @ApiSuccess(SuccessCode.CARD_UPDATED)
+    public CardResponseDto updateCard(
+            @PathVariable Long deckId,
+            @PathVariable Long cardId,
+            @Valid @RequestBody CardRequestDto requestDto
+    ) {
+        return cardService.updateCard(deckId, cardId, requestDto);
     }
 
-    @GetMapping("/{deckId}/cards/due")
-    public List<CardResponseDto> getDueCards(@PathVariable Long deckId) {
-        return cardService.getDueCards(deckId);
+    @DeleteMapping("/{deckId}/cards/{cardId}")
+    @ApiSuccess(SuccessCode.CARD_DELETED)
+    public void deleteCard(
+            @PathVariable Long deckId,
+            @PathVariable Long cardId
+    ) {
+        cardService.deleteCard(deckId, cardId);
     }
 }

@@ -7,13 +7,18 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface CardRepository extends JpaRepository<Card, Long> {
-    @Query("SELECT c FROM Card c WHERE c.deck.id = :deckId AND (c.nextReviewDate <= :today OR c.nextReviewDate IS NULL)")
+    @Query("SELECT c FROM Card c WHERE c.deck.id = :deckId AND (c.nextReviewDate <= :today OR c.nextReviewDate IS NULL) ORDER BY c.nextReviewDate ASC, c.id ASC")
     List<Card> findDueCards(@Param("deckId") Long deckId, @Param("today")LocalDate today);
 
+    List<Card> findAllByDeckIdOrderByIdDesc(Long deckId);
+
+    Optional<Card> findByIdAndDeckId(Long cardId, Long deckId);
+
     // 새 카드 개수 세기
-    long countByRepetition(int repetition);
+    long countByNextReviewDateIsNull();
 
     // 복습 카드 개수 세기
     long countByNextReviewDateLessThanEqual(LocalDate date);
