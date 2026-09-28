@@ -1,15 +1,27 @@
 package com.rememberfit.backend.global.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@EnableConfigurationProperties(CorsProperties.class)
 public class WebConfig implements WebMvcConfigurer {
+
+    private final CorsProperties corsProperties;
+
+    public WebConfig(CorsProperties corsProperties) {
+        this.corsProperties = corsProperties;
+    }
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // 모든 주소에 대해
-                .allowedOrigins("*") // 모든 출처(기기, 웹사이트)를 허용
-                .allowedMethods("GET", "POST", "PUT", "DELETE"); // 이 방식들 허용
+        registry.addMapping("/api/**")
+                .allowedOrigins(corsProperties.allowedOrigins().toArray(String[]::new))
+                .allowedMethods("GET", "POST", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("Accept", "Content-Type", "Authorization")
+                .allowCredentials(false)
+                .maxAge(3600);
     }
 }
