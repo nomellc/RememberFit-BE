@@ -1,6 +1,7 @@
 # RememberFit
 
-<img width="1920" height="1080" alt="프레젠테이션 - Smart Flashcard Study" src="https://github.com/user-attachments/assets/efe006fb-3a7d-4802-9a11-0b30a18621ab" />
+<img width="1920" height="1080" alt="1" src="https://github.com/user-attachments/assets/c347fba2-3197-4349-9f9f-f6aeefb7cb99" />
+
 
 
 ---
@@ -68,24 +69,26 @@ com.rememberfit.backend
 ### 1. 홈 화면
 오늘 학습할 새 카드와 복습 카드 수, 기억 완료 현황을 한눈에 확인하고 바로 학습을 시작할 수 있습니다. <br/>
 
-<img width="1920" height="1080" alt="프레젠테이션 - Smart Flashcard Study (7)" src="https://github.com/user-attachments/assets/9b183e04-b044-4674-9b83-d38000d14623" />
+<img width="1920" height="1080" alt="5" src="https://github.com/user-attachments/assets/cde918ca-10bb-4f28-ba8e-3865265b93a8" />
+
+
 
 ---
 
 ### 2. 암기장 화면
 학습 주제별로 암기장을 만들고 이름을 수정하거나 삭제할 수 있습니다. 각 암기장에 포함된 카드 수도 함께 표시됩니다. <br/>
 
-<img width="1920" height="1080" alt="프레젠테이션 - Smart Flashcard Study (8)" src="https://github.com/user-attachments/assets/cc06c5eb-84d0-4895-a8ea-8379047d8c1b" />
-
+<img width="1920" height="1080" alt="6" src="https://github.com/user-attachments/assets/0615866e-f514-49f8-8e8a-be6491042308" />
 
 
 ---
+
 
 ### 3. 학습 화면
 카드 앞면을 터치하면 뒷면에 정답이 나옵니다. <br/>
 난이도를 선택하면 그 난이도에 따라 다음 학습 날짜가 자동으로 결정됩니다. <br/>
 
-<img width="1920" height="1080" alt="프레젠테이션 - Smart Flashcard Study (5)" src="https://github.com/user-attachments/assets/63162578-9417-43c8-ac3b-dfd18907217f" />
+<img width="1920" height="1080" alt="7" src="https://github.com/user-attachments/assets/022ac752-7bbb-40c2-aad8-1e166705d394" />
 
 
 ---
@@ -93,6 +96,6 @@ com.rememberfit.backend
 ### 4. 통계 화면
 누적 학습 횟수, 최근 7일 학습량, 연속 학습일과 평가 분포를 실제 학습 기록을 기준으로 확인할 수 있습니다. <br/>
 
-<img width="1920" height="1080" alt="프레젠테이션 - Smart Flashcard Study (6)" src="https://github.com/user-attachments/assets/81c5e10c-874d-403b-91ee-aab3fa97aa9b" />
+<img width="1920" height="1080" alt="8" src="https://github.com/user-attachments/assets/5f848d5a-5556-46d6-9dfe-d90bc909e666" />
 
 
