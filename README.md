@@ -1,6 +1,6 @@
 # RememberFit
 
-<img width="1920" height="1080" alt="1" src="https://github.com/user-attachments/assets/c347fba2-3197-4349-9f9f-f6aeefb7cb99" />
+<img width="1920" height="1080" alt="1" src="https://github.com/user-attachments/assets/651aa0d3-bbfe-4e15-a293-647ee98650b2" />
 
 
 
@@ -69,7 +69,7 @@ com.rememberfit.backend
 ### 1. 홈 화면
 오늘 학습할 새 카드와 복습 카드 수, 기억 완료 현황을 한눈에 확인하고 바로 학습을 시작할 수 있습니다. <br/>
 
-<img width="1920" height="1080" alt="5" src="https://github.com/user-attachments/assets/cde918ca-10bb-4f28-ba8e-3865265b93a8" />
+<img width="1920" height="1080" alt="5" src="https://github.com/user-attachments/assets/518f878e-b1e1-40e7-981d-ded2fc08361a" />
 
 
 
@@ -78,7 +78,7 @@ com.rememberfit.backend
 ### 2. 암기장 화면
 학습 주제별로 암기장을 만들고 이름을 수정하거나 삭제할 수 있습니다. 각 암기장에 포함된 카드 수도 함께 표시됩니다. <br/>
 
-<img width="1920" height="1080" alt="6" src="https://github.com/user-attachments/assets/0615866e-f514-49f8-8e8a-be6491042308" />
+<img width="1920" height="1080" alt="6" src="https://github.com/user-attachments/assets/effd576f-05fb-4299-8ef3-80574e8e6f5a" />
 
 
 ---
@@ -88,7 +88,8 @@ com.rememberfit.backend
 카드 앞면을 터치하면 뒷면에 정답이 나옵니다. <br/>
 난이도를 선택하면 그 난이도에 따라 다음 학습 날짜가 자동으로 결정됩니다. <br/>
 
-<img width="1920" height="1080" alt="7" src="https://github.com/user-attachments/assets/022ac752-7bbb-40c2-aad8-1e166705d394" />
+<img width="1920" height="1080" alt="7" src="https://github.com/user-attachments/assets/bb221ad8-b1c1-48d3-a3c1-ff92dd5d3ca3" />
+
 
 
 ---
@@ -96,6 +97,7 @@ com.rememberfit.backend
 ### 4. 통계 화면
 누적 학습 횟수, 최근 7일 학습량, 연속 학습일과 평가 분포를 실제 학습 기록을 기준으로 확인할 수 있습니다. <br/>
 
-<img width="1920" height="1080" alt="8" src="https://github.com/user-attachments/assets/5f848d5a-5556-46d6-9dfe-d90bc909e666" />
+
+<img width="1920" height="1080" alt="8" src="https://github.com/user-attachments/assets/87d09246-6684-4361-9b44-3198bafe74a3" />
 
 
