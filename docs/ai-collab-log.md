@@ -154,3 +154,82 @@ pitest 재실행 결과만 근거로 삼았다.
 | 10-23 | `returnsEmptyListWhenDeckHasNoDueCards` | 위 3건 중 1건 | **채택 (단, 변이 미기여)** | 이 테스트는 "빈 리스트로 교체" 변이 하에서도 통과하므로 변이를 하나도 죽이지 않는다. 경계 동작 문서화 목적으로만 채택하고, 변이 제거 실적에서는 제외한다 |
 | 10-23 | `StudyServiceTest` 구조 변경 | 테스트별 인라인 mock 생성을 `@BeforeEach` 필드 초기화로 전환 | **수정 후 채택** | 테스트 4건에서 mock 생성이 중복되므로 전환은 타당. 단 기존 테스트 `gradesCardWithApplicationTimeZoneAndSavesStudyLog`의 assertion은 한 줄도 바꾸지 않는 조건을 걸었고, 고정 시각(`2026-09-28T15:30:00Z`)과 기대 날짜 리터럴을 그대로 유지했다 |
 | 10-23 | `StudyService.gradeCard()` | `getDueCards`와 달리 `validateDeck()`을 호출하지 않아, 없는 덱에 채점하면 `DECK_NOT_FOUND`가 아니라 `CARD_NOT_FOUND`가 반환됨 | **보류** | 프로덕션 코드 수정 금지 원칙에 따라 이번 작업에서 고치지 않음. pitest도 이 결함을 변이로 잡아내지 못했다(해당 분기가 애초에 코드에 없으므로). 별도 이슈로 분리 |
+
+---
+
+### 2차: 남은 생존 변이 6개 (2026-10-23)
+
+**사전에 정의한 완료 기준**
+
+| 죽여야 할 변이 | 사망 조건 |
+|---|---|
+| `DeckService.getAllDecks()` L28 — 빈 리스트 교체 | 목록의 크기·제목·`cardCount`까지 검증 |
+| `DeckService.getDeck()` L47 — `orElseThrow` 람다 → null | 없는 덱 수정/삭제 시 `CustomException(DECK_NOT_FOUND)` (변이 시 NPE) |
+| `CardService.getDeck()` L57 — `orElseThrow` 람다 → null | 없는 덱의 카드 조회/생성 시 `DECK_NOT_FOUND` |
+| `StatisticsService.calculateStreak()` L102 — 조건 반전 | `&&`의 두 번째 조건이 평가되어야 하므로 **마지막 학습이 어제**인 경우가 필요 |
+| `DeckController.getDecks()` L29 — 빈 리스트 교체 | `GET /api/decks` 응답 본문 검증 |
+| `StudyController.getDueCards()` L24 — 빈 리스트 교체 | `GET /api/decks/{id}/cards/due` 응답 본문 검증 |
+
+서비스 계층은 Mockito 단위 테스트, 컨트롤러 변이는 기존 `@SpringBootTest` + MockMvc 방식으로
+처리했다. 프로젝트에 `@WebMvcTest`가 없어 새 방식을 도입하지 않았다.
+
+**결과**
+
+| 지표 | 베이스라인 | 1차 후 | 2차 후 |
+|---|---|---|---|
+| Mutation score | 86.6% (58/67) | 91.0% (61/67) | **100% (67/67)** |
+| 생존 변이 | 9개 | 6개 | **0개** |
+| Test strength | 100% | 100% | 100% |
+| 라인 커버리지 | 90.5% | 93.1% | **95.3%** |
+| 브랜치 커버리지 | 75.8% | 81.8% | **90.9%** |
+| 테스트 메서드 | 21개 | 24개 | **35개** |
+| 실행 케이스 | 26개 | 29개 | **40개** |
+
+클래스별 변이: 10개 클래스 전부 100% killed.
+
+남은 라인 커버리지 미달(95.3%)은 변이 대상에서 제외한 `global` 패키지와
+`BackendApplication`이다. 변이 기준으로는 더 죽일 것이 없다.
+
+---
+
+## 검증 기록 (2차)
+
+| 날짜 | 대상 | AI 제안 / 주장 | 판정 | 사유 |
+|---|---|---|---|---|
+| 10-23 | `DeckServiceTest` 3건 (신규) | 목록 매핑 1건 + 없는 덱 수정/삭제 2건 | **채택** | pitest가 `DeckService` L28, L47을 killed로 기록. 삭제 테스트는 `verify(never()).delete()`로 삭제가 실행되지 않는 것까지 검증 |
+| 10-23 | `CardServiceTest` 2건 (신규) | 없는 덱의 카드 조회/생성 | **채택** | `CardService` L57 killed. 조회 테스트는 `verifyNoInteractions(cardRepository)`로 덱 검증이 카드 조회보다 먼저 일어나는 순서까지 고정 |
+| 10-23 | `StatisticsServiceTest` streak 2건 | 마지막 학습이 어제인 경우(streak 2) / 이틀 전인 경우(streak 0) | **채택** | L102 `&&`의 두 번째 조건은 "마지막 학습이 오늘"인 기존 테스트에서는 short-circuit으로 **평가조차 되지 않았다.** 이 조건을 밟는 입력을 만들어야 죽는 변이였음 |
+| 10-23 | 컨트롤러 통합 테스트 4건 | 덱 목록 / 복습 대상 목록 / 없는 덱 수정 / 없는 덱 카드 조회 | **채택** | `DeckController` L29, `StudyController` L24 killed |
+| 10-23 | "pitest 크레딧이 없는 테스트 5건은 변이에 기여하지 않는다" | `killingTest` 기록을 근거로 한 판정 | **반려** | pitest는 변이당 killing test를 **1건만** 기록한다. 이를 근거로 무용 판정을 내리려다, 프로덕션 코드에 해당 변이 3종(조건 반전, 람다 2건)을 직접 주입해 5건을 돌렸더니 **5건 전부 실패**했다. 즉 전부 유효한 테스트였고, 크레딧이 다른 테스트에 간 것이었다. 주입한 변이는 검증 직후 `git checkout -- src/main`으로 되돌렸다 |
+
+**수동 뮤테이션 검증 기록**
+
+| 주입한 변이 | 실행한 테스트 | 결과 |
+|---|---|---|
+| `StatisticsService` L102 조건 반전 | `countsStreakWhenLatestStudyWasYesterday` | FAILED (= 변이 사망) |
+| `DeckService` L47 람다 → null | `throwsDeckNotFoundWhenUpdatingMissingDeck` | FAILED |
+| `CardService` L57 람다 → null | `throwsDeckNotFoundBeforeQueryingCardsWhenDeckIsMissing` | FAILED |
+| `DeckService` L47 람다 → null | `rejectsDeckUpdateWhenDeckIsMissing` | FAILED |
+| `CardService` L57 람다 → null | `rejectsCardListingWhenDeckIsMissing` | FAILED |
+
+이로써 2차에서 추가한 11건 전부가 변이를 죽일 수 있는 테스트임을 확인했다.
+pitest 크레딧 6건 + 수동 주입 확인 5건.
+
+---
+
+## 1주차 결론
+
+mutation score 100%는 "버그가 없다"는 뜻이 아니다. 베이스라인에서 이미 확인했듯
+`Sm2Calculator`는 변이 14개 전부 killed인 상태로도 복습 간격 상한이 없다.
+`StudyService.gradeCard`의 덱 검증 누락(보류 항목)도 변이로 잡히지 않았다.
+
+자동 지표가 끝나는 지점이 사람이 시작하는 지점이다:
+
+| 구분 | 담당 |
+|---|---|
+| 작성된 코드가 의도대로 도는가 | 커버리지 + mutation score (자동) |
+| 테스트가 실제로 검증하는가 | mutation score (자동) |
+| 필요한 코드가 작성되었는가 | 사람이 요구사항과 코드를 대조 |
+| AI가 내놓은 판정 근거가 맞는가 | 사람이 반례를 직접 주입 |
+
+이번 작업에서 반려·정정한 4건은 전부 네 번째 행에서 나왔다.
