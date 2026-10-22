@@ -63,4 +63,9 @@ pitest {
 	outputFormats = ['HTML', 'XML']
 	timestampedReports = false
 	threads = 4
+	// 현재 실측값은 mutation 100%, test strength 100%, line 98%.
+	// 여유를 두되 지표가 눈에 띄게 내려가면 PR을 막는다.
+	mutationThreshold = 95
+	testStrengthThreshold = 95
+	coverageThreshold = 90
 }
