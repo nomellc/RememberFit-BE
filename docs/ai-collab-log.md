@@ -281,7 +281,7 @@ mutation score 100%는 "버그가 없다"는 뜻이 아니다. 베이스라인�
 |---|---|---|---|---|
 | 10-23 | pitest 지표 게이트 | "threshold를 설정하면 지표 하락 시 PR이 막힌다" | **채택 (직접 확인)** | 주장을 믿지 않고 `mutationThreshold`를 101로 올려 실행했다. `RuntimeException: Mutation score of 100 is below threshold of 101`, exit 1로 빌드가 실패하는 것을 확인한 뒤 95로 되돌렸다 |
 | 10-23 | `DatabaseMigrationTest` 환경 변수 오버라이드 | "`${MIGRATION_TEST_DB_URL:기본값}` 형태로 CI에서 접속 대상을 바꿀 수 있다" | **채택 (직접 확인)** | 기본값 실행은 통과, 일부러 깨뜨린 URL을 환경 변수로 주입했을 때 테스트가 FAILED 되는 것까지 확인했다. 통과만 봤다면 "환경 변수가 무시되고 기본값으로 돌았을 가능성"을 배제할 수 없다 |
-| 10-23 | `migration-mysql` job | 실제 MySQL에서 마이그레이션이 통과할 것 | **미검증** | 로컬 Docker 데몬이 꺼져 있어 확인하지 못했다. **이 job의 첫 CI 실행 자체가 검증이다.** V1 SQL의 `DOUBLE PRECISION`, `TIMESTAMP(6)` 널 허용 컬럼은 H2 MySQL 모드와 실제 MySQL의 동작이 갈릴 수 있는 지점이므로, 첫 실행이 실패하면 그것이 곧 찾으려던 결함이다 |
+| 10-23 | `migration-mysql` job | 실제 MySQL에서 마이그레이션이 통과할 것 | **검증 완료 (결함 없음)** | 로컬 Docker 데몬이 꺼져 있어 PR을 올리기 전에는 확인하지 못했다. PR #1의 CI에서 1m34s에 통과 → V1 SQL의 `DOUBLE PRECISION`, `TIMESTAMP(6)` 널 허용 컬럼은 실제 MySQL 8.0에서도 문제가 없었다. **찾으려던 결함은 존재하지 않았다.** 이 job의 가치는 발견한 버그가 아니라 앞으로 추가될 V2, V3 마이그레이션에 대한 회귀 방어로 이동한다 |
 | 10-23 | CI 요약 스크립트 | 리포트 파싱 결과가 맞다 | **채택 (직접 확인)** | 리포트가 일부만 있는 상태(테스트 1건 실패)와 전체 실행 상태 양쪽에서 돌려, 전자는 "실패 1건 / 라인 10.9%", 후자는 "40건 통과 / 100% / 95.3%"로 정확히 보고하는 것을 확인했다 |
 
 ### 남은 수동 작업 (YAML로 할 수 없는 것)
@@ -291,3 +291,105 @@ GitHub → Settings → Branches → `main` 브랜치 규칙에서
 `빌드·테스트·변이 검증`과 `마이그레이션 검증 (실제 MySQL)`을
 required status check로 지정해야 비로소 머지가 막힌다.
 워크플로우만 추가한 상태는 "검사는 돌지만 무시하고 머지할 수 있는" 상태다.
+
+---
+
+## 2단계 결과 (PR #1, 2026-10-23 머지)
+
+CI 3개 체크 전부 통과.
+
+| 체크 | 결과 | 소요 |
+|---|---|---|
+| 빌드·테스트·변이 검증 | pass | 2m36s |
+| 마이그레이션 검증 (실제 MySQL) | pass | 1m34s |
+| CodeRabbit | skipped | - |
+
+PR 전체 소요 2m41s. 두 job이 병렬로 돌아 전체 시간은 긴 job 하나에 수렴한다.
+
+### 배포 자동화 Before/After
+
+| 항목 | Before | After |
+|---|---|---|
+| PR 검사 | 없음 (로컬 `./gradlew test` 수동 실행에 의존) | 자동 (빌드 + 테스트 40건 + 변이 + 실제 MySQL 마이그레이션) |
+| 지표 추적 | 없음 (커버리지 측정 이력 자체가 없었다) | PR 코멘트로 매 실행 기록 |
+| 지표 하락 | 알 수 없음 | threshold 미달 시 CI 실패 |
+| 운영 DB 호환성 | H2 MySQL 모드에서만 확인 | 실제 MySQL 8.0에서 확인 |
+| 배포 | 미배포 | 미배포 (변동 없음) |
+
+배포 단계 수치는 쓰지 않는다. 배포한 적이 없으므로 "수동 N단계 → 자동"이라고
+쓸 근거가 없다. 배포 환경이 생기면 그때 측정한다.
+
+### 남은 수동 작업
+
+required status check 지정은 아직 하지 않았다. 지금 상태는
+"CI는 돌지만 실패해도 머지할 수 있는" 상태다. PR #1의 CI가 한 번 돌아
+체크 이름이 등록되었으므로 이제 설정할 수 있다.
+
+---
+
+## 보류 2건 해소 (2026-10-23)
+
+1주차에 "자동 지표로 잡히지 않는다"며 보류했던 2건을 수정했다.
+테스트를 먼저 쓰고 현재 코드에서 실패하는 것을 확인한 뒤 프로덕션 코드를 고쳤다.
+
+### 수정 전 실패 증거
+
+| 테스트 | 기대 | 실제 (수정 전) |
+|---|---|---|
+| `capsIntervalAtMaximum` | 365 | **750** |
+| `keepsIntervalAtMaximumWithoutIntegerOverflow` | 365 | **1073741822** |
+| `throwsDeckNotFoundWhenGradingCardInMissingDeck` | `DECK_NOT_FOUND` | `CARD_NOT_FOUND` |
+
+두 번째 수치가 결함의 정체다. `Integer.MAX_VALUE * 2.5`를 `Math.round`하면
+`5368709118`(long)이고, 이를 `(int)`로 캐스팅하면 `1073741822`로 **조용히 감싸진다.**
+예외도 나지 않고 값이 작아진다. 이후 `studyDate.plusDays(1073741822)`에서
+날짜 계산이 깨진다.
+
+추가한 테스트 5건 중 2건(`throwsCardNotFoundWhenDeckExistsButCardDoesNot`,
+`doesNotQueryDeckWhenGradingSucceeds`)은 수정 전에도 통과했다. 기존의 올바른 동작을
+고정하는 용도이고, 결함을 드러낸 것은 3건이다.
+
+### 수정 내용
+
+| 대상 | 수정 |
+|---|---|
+| `Sm2Calculator` | `MAX_INTERVAL_DAYS = 365` 추가. `(int) Math.min(Math.round(interval * easeFactor), MAX_INTERVAL_DAYS)` — **캐스팅 전에** 자른다 |
+| `StudyService.gradeCard` | `cardLookupFailure(deckId)` 헬퍼 추가. 카드 조회 실패 시에만 덱 존재를 확인해 `DECK_NOT_FOUND`/`CARD_NOT_FOUND`를 구분한다 |
+
+`gradeCard`에서 `getDueCards`처럼 앞단에 `validateDeck()`을 그대로 넣지 않은 이유는,
+정상 경로마다 `SELECT EXISTS` 쿼리가 하나 늘기 때문이다. 조회 실패 시에만 확인하면
+정상 경로의 쿼리 수는 그대로이면서 오류 코드는 올바르다.
+이 판단을 `doesNotQueryDeckWhenGradingSucceeds` 테스트로 고정했다.
+
+### 결과
+
+| 지표 | 수정 전 | 수정 후 |
+|---|---|---|
+| Mutation score | 100% (67/67) | **100% (70/70)** |
+| Test strength | 100% | 100% |
+| 라인 커버리지 | 95.3% (261/274) | 95.3% (264/277) |
+| 브랜치 커버리지 | 90.9% (30/33) | **91.4% (32/35)** |
+| 실행 테스트 케이스 | 40개 | **45개** |
+
+### 이번에도 지표가 못 잡은 것
+
+`Sm2Calculator`의 변이 수는 수정 전후 모두 **14개로 동일하다.**
+리포트에서 상한을 넣은 줄(L25)의 변이를 확인했더니 하나뿐이었다.
+
+```
+L25  MathMutator  Replaced double multiplication with division
+```
+
+`interval * easeFactor`의 곱셈을 바꾸는 변이다.
+**`Math.min(..., MAX_INTERVAL_DAYS)`을 제거하거나 무력화하는 변이는 생성되지 않는다.**
+pitest의 기본 mutator 집합은 `Math.min` 호출을 변형하지 않는다.
+
+따라서 "mutation score 100%를 유지했다"는 사실은 이 상한이 보호된다는 증거가 **아니다.**
+상한을 지우면 내가 명시적으로 쓴 두 테스트가 실패해서 잡히지만(수정 전 red 상태로 확인),
+지표는 그 줄이 사라져도 100%를 그대로 보고한다.
+
+반면 `StudyService.cardLookupFailure`는 변이 3개(조건 반전 1, null 반환 2)가 생성되어
+전부 killed 됐다. 같은 커밋 안에서 한쪽은 지표로 보호되고 한쪽은 안 된다.
+
+지표가 올랐는지가 아니라 **무엇이 지표의 사정권 안에 있는지**를 봐야 한다는 사례를
+하나 더 얻었다.

@@ -68,6 +68,26 @@ class Sm2CalculatorTest {
         assertThat(result.easeFactor()).isEqualTo(1.3);
     }
 
+    @Test
+    void capsIntervalAtMaximum() {
+        Card card = new Card("질문", "답", new Deck("테스트"));
+        card.updateStudyStatus(5, 300, 2.5, BASE_DATE);
+
+        Sm2Calculator.Sm2Result result = Sm2Calculator.calculate(card, 5);
+
+        assertThat(result.interval()).isEqualTo(365);
+    }
+
+    @Test
+    void keepsIntervalAtMaximumWithoutIntegerOverflow() {
+        Card card = new Card("질문", "답", new Deck("테스트"));
+        card.updateStudyStatus(40, Integer.MAX_VALUE, 2.5, BASE_DATE);
+
+        Sm2Calculator.Sm2Result result = Sm2Calculator.calculate(card, 5);
+
+        assertThat(result.interval()).isEqualTo(365);
+    }
+
     private void apply(Card card, Sm2Calculator.Sm2Result result) {
         card.updateStudyStatus(
                 result.repetition(),

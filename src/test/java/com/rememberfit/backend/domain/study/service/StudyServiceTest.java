@@ -23,7 +23,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -100,5 +102,39 @@ class StudyServiceTest {
         when(cardRepository.findDueCards(20L, LocalDate.of(2026, 9, 29))).thenReturn(List.of());
 
         assertThat(studyService.getDueCards(20L)).isEmpty();
+    }
+
+    @Test
+    void throwsDeckNotFoundWhenGradingCardInMissingDeck() {
+        when(cardRepository.findByIdAndDeckId(10L, 99L)).thenReturn(Optional.empty());
+        when(deckRepository.existsById(99L)).thenReturn(false);
+
+        assertThatThrownBy(() -> studyService.gradeCard(99L, 10L, 5))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DECK_NOT_FOUND);
+
+        verify(studyLogRepository, never()).save(any());
+    }
+
+    @Test
+    void throwsCardNotFoundWhenDeckExistsButCardDoesNot() {
+        when(cardRepository.findByIdAndDeckId(10L, 20L)).thenReturn(Optional.empty());
+        when(deckRepository.existsById(20L)).thenReturn(true);
+
+        assertThatThrownBy(() -> studyService.gradeCard(20L, 10L, 5))
+                .isInstanceOf(CustomException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CARD_NOT_FOUND);
+
+        verify(studyLogRepository, never()).save(any());
+    }
+
+    @Test
+    void doesNotQueryDeckWhenGradingSucceeds() {
+        Card card = new Card("질문", "답", new Deck("테스트"));
+        when(cardRepository.findByIdAndDeckId(10L, 20L)).thenReturn(Optional.of(card));
+
+        studyService.gradeCard(20L, 10L, 5);
+
+        verify(deckRepository, never()).existsById(any());
     }
 }
