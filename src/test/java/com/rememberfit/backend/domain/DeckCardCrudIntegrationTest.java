@@ -132,4 +132,34 @@ class DeckCardCrudIntegrationTest {
         assertThat(unchanged.getFrontText()).isEqualTo("원래 질문");
         assertThat(unchanged.getRepetition()).isZero();
     }
+
+    @Test
+    void listsDecksWithCardCountThroughApi() throws Exception {
+        Deck deck = deckRepository.saveAndFlush(new Deck("목록 조회 테스트"));
+        cardRepository.saveAndFlush(new Card("질문", "답", deck));
+
+        mockMvc.perform(get("/api/decks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isNotEmpty())
+                .andExpect(jsonPath("$.data[0].id").value(deck.getId()))
+                .andExpect(jsonPath("$.data[0].title").value("목록 조회 테스트"))
+                .andExpect(jsonPath("$.data[0].cardCount").value(1));
+    }
+
+    @Test
+    void rejectsDeckUpdateWhenDeckIsMissing() throws Exception {
+        mockMvc.perform(patch("/api/decks/{deckId}", 999999L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"없는 암기장\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("DECK_NOT_FOUND"));
+    }
+
+    @Test
+    void rejectsCardListingWhenDeckIsMissing() throws Exception {
+        mockMvc.perform(get("/api/decks/{deckId}/cards", 999999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("DECK_NOT_FOUND"));
+    }
 }

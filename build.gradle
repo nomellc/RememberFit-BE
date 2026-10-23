@@ -2,6 +2,8 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.16'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
+	id 'info.solidsoft.pitest' version '1.15.0'
 }
 
 group = 'com.rememberfit'
@@ -40,4 +42,30 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy tasks.jacocoTestReport
+}
+
+jacoco {
+	toolVersion = '0.8.12'
+}
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.test
+	reports {
+		xml.required = true
+		html.required = true
+	}
+}
+
+pitest {
+	junit5PluginVersion = '1.2.1'
+	targetClasses = ['com.rememberfit.backend.domain.*']
+	outputFormats = ['HTML', 'XML']
+	timestampedReports = false
+	threads = 4
+	// 현재 실측값은 mutation 100%, test strength 100%, line 98%.
+	// 여유를 두되 지표가 눈에 띄게 내려가면 PR을 막는다.
+	mutationThreshold = 95
+	testStrengthThreshold = 95
+	coverageThreshold = 90
 }

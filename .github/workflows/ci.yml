@@ -1,0 +1,137 @@
+name: CI
+
+# 배포 환경이 아직 없으므로 배포 job은 두지 않는다. PR 검사와 main 보호만 한다.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# 기본 권한을 읽기로 좁힌다. 쓰기가 필요한 job에서만 따로 올린다.
+permissions:
+  contents: read
+
+concurrency:
+  # 같은 브랜치에 새 커밋이 올라오면 진행 중인 실행을 취소해 러너 시간을 아낀다.
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: 빌드·테스트·변이 검증
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # 검증 요약을 PR 코멘트로 남기기 위해 필요하다
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: JDK 17 설치와 Gradle 캐시 복원
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle # 의존성·래퍼 캐시를 복원해 매 실행마다 재다운로드하지 않는다
+
+      - name: gradlew 실행 권한 부여
+        run: chmod +x ./gradlew # 실행 비트 없이 커밋된 경우에도 동작하게 한다
+
+      - name: 빌드와 전체 테스트
+        # build 가 test 를 포함한다. test 는 build.gradle 설정에 따라 JaCoCo 리포트까지 생성한다.
+        run: ./gradlew build --no-daemon
+
+      - name: 변이 테스트
+        # build.gradle 의 mutationThreshold/testStrengthThreshold 미달이면 이 step 에서 실패한다.
+        # 커버리지만 올리고 검증은 하지 않는 테스트가 들어오는 것을 여기서 막는다.
+        run: ./gradlew pitest --no-daemon
+
+      - name: 검증 요약 생성
+        # 앞 step 이 실패해도 그때까지의 수치는 남겨야 하므로 always() 로 둔다.
+        if: always()
+        run: python3 .github/scripts/ci-summary.py
+
+      - name: 검증 요약을 PR 코멘트로 갱신
+        # 매 실행마다 새 코멘트를 달지 않고, 마커로 기존 코멘트를 찾아 수정한다.
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- rememberfit-ci-summary -->';
+            const body = marker + '\n' + fs.readFileSync('build/ci-summary.md', 'utf8');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: 리포트 업로드
+        # 실패한 실행에서 HTML 리포트를 받아볼 수 있어야 원인을 찾을 수 있다.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-reports
+          path: |
+            build/reports/tests/test
+            build/reports/jacoco/test/html
+            build/reports/pitest
+          retention-days: 14
+          if-no-files-found: ignore
+
+  migration-mysql:
+    name: 마이그레이션 검증 (실제 MySQL)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        # 운영과 같은 MySQL 에서 Flyway 마이그레이션과 JPA validate 를 확인한다.
+        # 단위/통합 테스트는 H2 MySQL 모드를 쓰는데, 그 호환 모드는 완전하지 않다.
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rememberfit
+          MYSQL_DATABASE: rememberfit
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -prememberfit"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: JDK 17 설치와 Gradle 캐시 복원
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: gradlew 실행 권한 부여
+        run: chmod +x ./gradlew
+
+      - name: 실제 MySQL 에서 마이그레이션 검증
+        # DatabaseMigrationTest 의 기본값은 H2 다. 환경 변수로만 접속 대상을 바꾼다.
+        # 비밀번호는 이 job 안에서만 사는 임시 컨테이너용이라 Secrets 로 두지 않는다.
+        env:
+          MIGRATION_TEST_DB_URL: 'jdbc:mysql://127.0.0.1:3306/rememberfit?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC'
+          MIGRATION_TEST_DB_DRIVER: com.mysql.cj.jdbc.Driver
+          MIGRATION_TEST_DB_USERNAME: root
+          MIGRATION_TEST_DB_PASSWORD: rememberfit
+        run: ./gradlew test --tests '*DatabaseMigrationTest' --no-daemon
+
+      - name: 리포트 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-mysql-reports
+          path: build/reports/tests/test
+          retention-days: 14
+          if-no-files-found: ignore

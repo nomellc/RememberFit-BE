@@ -69,4 +69,17 @@ class StudyFlowIntegrationTest {
                 .andExpect(jsonPath("$.data.totalStudyCount").value(1))
                 .andExpect(jsonPath("$.data.qualityDistribution.goodCount").value(1));
     }
+
+    @Test
+    void listsDueCardsThroughApi() throws Exception {
+        Deck deck = deckRepository.saveAndFlush(new Deck("복습 목록 테스트"));
+        Card neverStudied = cardRepository.saveAndFlush(new Card("아직 학습 전", "복습 대상", deck));
+
+        mockMvc.perform(get("/api/decks/{deckId}/cards/due", deck.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isNotEmpty())
+                .andExpect(jsonPath("$.data[0].id").value(neverStudied.getId()))
+                .andExpect(jsonPath("$.data[0].frontText").value("아직 학습 전"));
+    }
 }

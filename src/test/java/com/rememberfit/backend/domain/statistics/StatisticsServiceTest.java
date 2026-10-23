@@ -116,6 +116,34 @@ class StatisticsServiceTest {
         assertThat(insights.qualityDistribution().easyCount()).isEqualTo(1);
     }
 
+    @Test
+    void countsStreakWhenLatestStudyWasYesterday() {
+        LocalDate today = LocalDate.now(clock);
+        Instant now = clock.instant();
+        studyLogRepository.saveAll(List.of(
+                studyLog(1L, 4, today.minusDays(1), now.minusSeconds(86_400)),
+                studyLog(2L, 5, today.minusDays(2), now.minusSeconds(86_400 * 2))
+        ));
+
+        StudyInsightsResponseDto insights = statisticsService.getStudyInsights();
+
+        assertThat(insights.streakDays()).isEqualTo(2);
+    }
+
+    @Test
+    void resetsStreakWhenLatestStudyIsOlderThanYesterday() {
+        LocalDate today = LocalDate.now(clock);
+        Instant now = clock.instant();
+        studyLogRepository.saveAll(List.of(
+                studyLog(1L, 4, today.minusDays(2), now.minusSeconds(86_400 * 2)),
+                studyLog(2L, 5, today.minusDays(3), now.minusSeconds(86_400 * 3))
+        ));
+
+        StudyInsightsResponseDto insights = statisticsService.getStudyInsights();
+
+        assertThat(insights.streakDays()).isZero();
+    }
+
     private StudyLog studyLog(Long cardId, int quality, LocalDate studyDate, Instant studiedAt) {
         return new StudyLog(
                 cardId,
