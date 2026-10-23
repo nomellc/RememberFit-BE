@@ -19,6 +19,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class CardServiceTest {
+    private static final Long USER_ID = 7L;
+
     private CardRepository cardRepository;
     private DeckRepository deckRepository;
     private CardService cardService;
@@ -32,9 +34,9 @@ class CardServiceTest {
 
     @Test
     void throwsDeckNotFoundBeforeQueryingCardsWhenDeckIsMissing() {
-        when(deckRepository.findById(99L)).thenReturn(Optional.empty());
+        when(deckRepository.findByIdAndUserId(99L, USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> cardService.getCardsByDeckId(99L))
+        assertThatThrownBy(() -> cardService.getCardsByDeckId(USER_ID, 99L))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DECK_NOT_FOUND);
 
@@ -43,9 +45,9 @@ class CardServiceTest {
 
     @Test
     void throwsDeckNotFoundWhenCreatingCardInMissingDeck() {
-        when(deckRepository.findById(99L)).thenReturn(Optional.empty());
+        when(deckRepository.findByIdAndUserId(99L, USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> cardService.createCard(99L, new CardRequestDto()))
+        assertThatThrownBy(() -> cardService.createCard(USER_ID, 99L, new CardRequestDto()))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DECK_NOT_FOUND);
 

@@ -8,6 +8,11 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum ErrorCode {
     VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "입력값을 확인해주세요."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요해요."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "로그인 정보가 만료되었어요. 다시 로그인해주세요."),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않아요."),
+    EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 가입된 이메일이에요."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없어요."),
     INVALID_REQUEST_BODY(HttpStatus.BAD_REQUEST, "요청 본문을 읽을 수 없어요."),
     INVALID_PATH_PARAMETER(HttpStatus.BAD_REQUEST, "주소의 식별자 형식이 올바르지 않아요."),
     DECK_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 암기장을 찾을 수 없어요."),

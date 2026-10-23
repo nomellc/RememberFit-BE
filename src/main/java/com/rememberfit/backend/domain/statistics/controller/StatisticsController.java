@@ -5,7 +5,9 @@ import com.rememberfit.backend.domain.statistics.dto.StudyInsightsResponseDto;
 import com.rememberfit.backend.domain.statistics.service.StatisticsService;
 import com.rememberfit.backend.global.response.ApiSuccess;
 import com.rememberfit.backend.global.response.SuccessCode;
+import com.rememberfit.backend.global.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,13 +20,13 @@ public class StatisticsController {
 
     @GetMapping("/summary")
     @ApiSuccess(SuccessCode.STATISTICS_READ)
-    public StudyStatisticsResponseDto getSummary() {
-        return statisticsService.getStudyStatistics();
+    public StudyStatisticsResponseDto getSummary(@AuthenticationPrincipal AuthenticatedUser user) {
+        return statisticsService.getStudyStatistics(user.id());
     }
 
     @GetMapping("/insights")
     @ApiSuccess(SuccessCode.INSIGHTS_READ)
-    public StudyInsightsResponseDto getInsights() {
-        return statisticsService.getStudyInsights();
+    public StudyInsightsResponseDto getInsights(@AuthenticationPrincipal AuthenticatedUser user) {
+        return statisticsService.getStudyInsights(user.id());
     }
 }

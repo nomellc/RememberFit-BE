@@ -6,7 +6,10 @@ import com.rememberfit.backend.domain.deck.entity.Deck;
 import com.rememberfit.backend.domain.deck.repository.DeckRepository;
 import com.rememberfit.backend.domain.study.repository.StudyLogRepository;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.rememberfit.backend.domain.user.entity.User;
+import com.rememberfit.backend.domain.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +17,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.rememberfit.backend.support.AuthTestSupport.asUser;
+import static com.rememberfit.backend.support.AuthTestSupport.createUser;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,14 +46,25 @@ class StudyFlowIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    private User user;
+
+    @BeforeEach
+    void createOwner() {
+        user = createUser(userRepository, "study-owner@test.local");
+    }
+
     @Test
     void recordsGradeAndKeepsHistoryAfterDeckDeletion() throws Exception {
-        Deck deck = deckRepository.saveAndFlush(new Deck("학습 기록 테스트"));
+        Deck deck = deckRepository.saveAndFlush(new Deck("학습 기록 테스트", user.getId()));
         Card card = cardRepository.saveAndFlush(new Card("질문", "답", deck));
 
         mockMvc.perform(post("/api/decks/{deckId}/cards/{cardId}/grade", deck.getId(), card.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"quality\":4}"))
+                        .content("{\"quality\":4}")
+                        .with(asUser(user)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.cardId").value(card.getId()))
@@ -56,7 +72,8 @@ class StudyFlowIntegrationTest {
 
         assertThat(studyLogRepository.count()).isEqualTo(1);
 
-        mockMvc.perform(delete("/api/decks/{deckId}", deck.getId()))
+        mockMvc.perform(delete("/api/decks/{deckId}", deck.getId())
+                        .with(asUser(user)))
                 .andExpect(status().isOk());
         entityManager.flush();
         entityManager.clear();
@@ -64,7 +81,8 @@ class StudyFlowIntegrationTest {
         assertThat(cardRepository.existsById(card.getId())).isFalse();
         assertThat(studyLogRepository.count()).isEqualTo(1);
 
-        mockMvc.perform(get("/api/statistics/insights"))
+        mockMvc.perform(get("/api/statistics/insights")
+                        .with(asUser(user)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalStudyCount").value(1))
                 .andExpect(jsonPath("$.data.qualityDistribution.goodCount").value(1));
@@ -72,10 +90,11 @@ class StudyFlowIntegrationTest {
 
     @Test
     void listsDueCardsThroughApi() throws Exception {
-        Deck deck = deckRepository.saveAndFlush(new Deck("복습 목록 테스트"));
+        Deck deck = deckRepository.saveAndFlush(new Deck("복습 목록 테스트", user.getId()));
         Card neverStudied = cardRepository.saveAndFlush(new Card("아직 학습 전", "복습 대상", deck));
 
-        mockMvc.perform(get("/api/decks/{deckId}/cards/due", deck.getId()))
+        mockMvc.perform(get("/api/decks/{deckId}/cards/due", deck.getId())
+                        .with(asUser(user)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isNotEmpty())

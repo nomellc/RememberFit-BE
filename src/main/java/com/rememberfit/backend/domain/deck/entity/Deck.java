@@ -12,11 +12,15 @@ import java.util.List;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "decks")
+@Table(name = "decks", indexes = @Index(name = "idx_decks_user_id", columnList = "user_id"))
 public class Deck {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // 소유자. 모든 조회는 이 값으로 걸러진다.
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(nullable = false, length = 40)
     private String title;
@@ -28,8 +32,9 @@ public class Deck {
     @OneToMany(mappedBy = "deck", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Card> cards = new ArrayList<>();
 
-    public Deck(String title) {
+    public Deck(String title, Long userId) {
         this.title = title;
+        this.userId = userId;
         this.createdAt = LocalDateTime.now();
     }
 

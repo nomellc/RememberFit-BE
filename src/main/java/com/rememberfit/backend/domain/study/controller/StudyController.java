@@ -7,7 +7,9 @@ import com.rememberfit.backend.domain.study.service.StudyService;
 import com.rememberfit.backend.global.response.ApiSuccess;
 import com.rememberfit.backend.global.response.SuccessCode;
 import jakarta.validation.Valid;
+import com.rememberfit.backend.global.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,17 +22,21 @@ public class StudyController {
 
     @GetMapping("/{deckId}/cards/due")
     @ApiSuccess(SuccessCode.DUE_CARDS_READ)
-    public List<CardResponseDto> getDueCards(@PathVariable Long deckId) {
-        return studyService.getDueCards(deckId);
+    public List<CardResponseDto> getDueCards(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable Long deckId
+    ) {
+        return studyService.getDueCards(user.id(), deckId);
     }
 
     @PostMapping("/{deckId}/cards/{cardId}/grade")
     @ApiSuccess(SuccessCode.STUDY_RECORDED)
     public StudyGradeResponseDto gradeCard(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable Long deckId,
             @PathVariable Long cardId,
             @Valid @RequestBody StudyGradeRequestDto requestDto
     ) {
-        return studyService.gradeCard(deckId, cardId, requestDto.getQuality());
+        return studyService.gradeCard(user.id(), deckId, cardId, requestDto.getQuality());
     }
 }

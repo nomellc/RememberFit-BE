@@ -1,6 +1,9 @@
 package com.rememberfit.backend.global.exception;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.rememberfit.backend.domain.user.entity.User;
+import com.rememberfit.backend.domain.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -8,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.rememberfit.backend.support.AuthTestSupport.asUser;
+import static com.rememberfit.backend.support.AuthTestSupport.createUser;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -21,11 +26,22 @@ class ApiExceptionHandlerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    private User user;
+
+    @BeforeEach
+    void createOwner() {
+        user = createUser(userRepository, "error-owner@test.local");
+    }
+
     @Test
     void rejectsBlankDeckTitleWithFieldError() throws Exception {
         mockMvc.perform(post("/api/decks")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":\"   \"}"))
+                        .content("{\"title\":\"   \"}")
+                        .with(asUser(user)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.message").value("입력값을 확인해주세요."))
@@ -37,7 +53,8 @@ class ApiExceptionHandlerTest {
     void rejectsInvalidCardFieldsBeforeLookingUpDeck() throws Exception {
         mockMvc.perform(post("/api/decks/99999/cards")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"frontText\":\"\",\"backText\":\"답\"}"))
+                        .content("{\"frontText\":\"\",\"backText\":\"답\"}")
+                        .with(asUser(user)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.fieldErrors.frontText").value("카드 앞면을 입력해주세요."));
@@ -47,7 +64,8 @@ class ApiExceptionHandlerTest {
     void rejectsGradeOutsideSm2Range() throws Exception {
         mockMvc.perform(post("/api/decks/1/cards/1/grade")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"quality\":9}"))
+                        .content("{\"quality\":9}")
+                        .with(asUser(user)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.fieldErrors.quality").value("학습 점수는 5 이하여야 해요."));
@@ -55,7 +73,8 @@ class ApiExceptionHandlerTest {
 
     @Test
     void returnsStructuredNotFoundError() throws Exception {
-        mockMvc.perform(get("/api/decks/99999/cards"))
+        mockMvc.perform(get("/api/decks/99999/cards")
+                        .with(asUser(user)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("DECK_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("해당 암기장을 찾을 수 없어요."))
@@ -64,7 +83,8 @@ class ApiExceptionHandlerTest {
 
     @Test
     void returnsBadRequestForInvalidPathParameter() throws Exception {
-        mockMvc.perform(get("/api/decks/not-a-number/cards"))
+        mockMvc.perform(get("/api/decks/not-a-number/cards")
+                        .with(asUser(user)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_PATH_PARAMETER"));
     }
@@ -73,7 +93,8 @@ class ApiExceptionHandlerTest {
     void returnsStructuredErrorForMalformedJson() throws Exception {
         mockMvc.perform(post("/api/decks")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"title\":"))
+                        .content("{\"title\":")
+                        .with(asUser(user)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST_BODY"));
     }
