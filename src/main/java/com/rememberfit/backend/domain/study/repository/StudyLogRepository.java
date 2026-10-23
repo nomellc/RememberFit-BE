@@ -15,11 +15,12 @@ public interface StudyLogRepository extends JpaRepository<StudyLog, Long> {
     @Query("""
             SELECT s.studyDate AS studyDate, COUNT(s) AS count
             FROM StudyLog s
-            WHERE s.studyDate BETWEEN :startDate AND :endDate
+            WHERE s.userId = :userId AND s.studyDate BETWEEN :startDate AND :endDate
             GROUP BY s.studyDate
             ORDER BY s.studyDate ASC
             """)
     List<DailyStudyCountProjection> countDailyBetween(
+            @Param("userId") Long userId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
     );
@@ -27,11 +28,12 @@ public interface StudyLogRepository extends JpaRepository<StudyLog, Long> {
     @Query("""
             SELECT s.quality AS quality, COUNT(s) AS count
             FROM StudyLog s
+            WHERE s.userId = :userId
             GROUP BY s.quality
             ORDER BY s.quality ASC
             """)
-    List<QualityCountProjection> countByQuality();
+    List<QualityCountProjection> countByQuality(@Param("userId") Long userId);
 
-    @Query("SELECT DISTINCT s.studyDate FROM StudyLog s ORDER BY s.studyDate DESC")
-    List<LocalDate> findDistinctStudyDatesDescending();
+    @Query("SELECT DISTINCT s.studyDate FROM StudyLog s WHERE s.userId = :userId ORDER BY s.studyDate DESC")
+    List<LocalDate> findDistinctStudyDatesDescending(@Param("userId") Long userId);
 }

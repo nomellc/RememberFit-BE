@@ -22,6 +22,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DeckServiceTest {
+    private static final Long USER_ID = 7L;
+
     private DeckRepository deckRepository;
     private DeckService deckService;
 
@@ -33,12 +35,12 @@ class DeckServiceTest {
 
     @Test
     void mapsEveryDeckToResponseKeepingRepositoryOrder() {
-        Deck withOneCard = new Deck("카드 있는 암기장");
+        Deck withOneCard = new Deck("카드 있는 암기장", USER_ID);
         new Card("질문", "답", withOneCard);
-        Deck empty = new Deck("빈 암기장");
-        when(deckRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(withOneCard, empty));
+        Deck empty = new Deck("빈 암기장", USER_ID);
+        when(deckRepository.findAllByUserIdOrderByCreatedAtDesc(USER_ID)).thenReturn(List.of(withOneCard, empty));
 
-        List<DeckResponseDto> result = deckService.getAllDecks();
+        List<DeckResponseDto> result = deckService.getAllDecks(USER_ID);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getTitle()).isEqualTo("카드 있는 암기장");
@@ -49,18 +51,18 @@ class DeckServiceTest {
 
     @Test
     void throwsDeckNotFoundWhenUpdatingMissingDeck() {
-        when(deckRepository.findById(99L)).thenReturn(Optional.empty());
+        when(deckRepository.findByIdAndUserId(99L, USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> deckService.updateDeck(99L, new DeckRequestDto("새 이름")))
+        assertThatThrownBy(() -> deckService.updateDeck(USER_ID, 99L, new DeckRequestDto("새 이름")))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DECK_NOT_FOUND);
     }
 
     @Test
     void throwsDeckNotFoundWhenDeletingMissingDeckWithoutDeleting() {
-        when(deckRepository.findById(99L)).thenReturn(Optional.empty());
+        when(deckRepository.findByIdAndUserId(99L, USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> deckService.deleteDeck(99L))
+        assertThatThrownBy(() -> deckService.deleteDeck(USER_ID, 99L))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DECK_NOT_FOUND);
 

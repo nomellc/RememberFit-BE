@@ -29,27 +29,27 @@ public class StatisticsService {
     private final Clock clock;
 
     @Transactional(readOnly = true)
-    public StudyStatisticsResponseDto getStudyStatistics() {
+    public StudyStatisticsResponseDto getStudyStatistics(Long userId) {
         LocalDate today = LocalDate.now(clock);
-        long newCount = cardRepository.countByNextReviewDateIsNull();
-        long reviewCount = cardRepository.countByNextReviewDateLessThanEqual(today);
-        long doneCount = cardRepository.countByRepetitionGreaterThanEqual(MASTERED_REPETITION_COUNT);
+        long newCount = cardRepository.countByDeck_UserIdAndNextReviewDateIsNull(userId);
+        long reviewCount = cardRepository.countByDeck_UserIdAndNextReviewDateLessThanEqual(userId, today);
+        long doneCount = cardRepository.countByDeck_UserIdAndRepetitionGreaterThanEqual(userId, MASTERED_REPETITION_COUNT);
 
         return new StudyStatisticsResponseDto(newCount, reviewCount, doneCount);
     }
 
     @Transactional(readOnly = true)
-    public StudyInsightsResponseDto getStudyInsights() {
+    public StudyInsightsResponseDto getStudyInsights(Long userId) {
         LocalDate today = LocalDate.now(clock);
         LocalDate startDate = today.minusDays(6);
 
-        List<DailyStudyCountDto> weeklyActivity = buildWeeklyActivity(startDate, today);
-        QualityDistributionDto qualityDistribution = buildQualityDistribution();
+        List<DailyStudyCountDto> weeklyActivity = buildWeeklyActivity(userId, startDate, today);
+        QualityDistributionDto qualityDistribution = buildQualityDistribution(userId);
         long totalStudyCount = qualityDistribution.againCount()
                 + qualityDistribution.hardCount()
                 + qualityDistribution.goodCount()
                 + qualityDistribution.easyCount();
-        int streakDays = calculateStreak(studyLogRepository.findDistinctStudyDatesDescending(), today);
+        int streakDays = calculateStreak(studyLogRepository.findDistinctStudyDatesDescending(userId), today);
 
         return new StudyInsightsResponseDto(
                 totalStudyCount,
@@ -59,10 +59,10 @@ public class StatisticsService {
         );
     }
 
-    private List<DailyStudyCountDto> buildWeeklyActivity(LocalDate startDate, LocalDate endDate) {
+    private List<DailyStudyCountDto> buildWeeklyActivity(Long userId, LocalDate startDate, LocalDate endDate) {
         Map<LocalDate, Long> countsByDate = new HashMap<>();
         for (DailyStudyCountProjection projection
-                : studyLogRepository.countDailyBetween(startDate, endDate)) {
+                : studyLogRepository.countDailyBetween(userId, startDate, endDate)) {
             countsByDate.put(projection.getStudyDate(), projection.getCount());
         }
 
@@ -73,13 +73,13 @@ public class StatisticsService {
         return activity;
     }
 
-    private QualityDistributionDto buildQualityDistribution() {
+    private QualityDistributionDto buildQualityDistribution(Long userId) {
         long againCount = 0;
         long hardCount = 0;
         long goodCount = 0;
         long easyCount = 0;
 
-        for (QualityCountProjection projection : studyLogRepository.countByQuality()) {
+        for (QualityCountProjection projection : studyLogRepository.countByQuality(userId)) {
             switch (projection.getQuality()) {
                 case 0, 1, 2 -> againCount += projection.getCount();
                 case 3 -> hardCount += projection.getCount();

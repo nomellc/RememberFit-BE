@@ -9,7 +9,10 @@ import com.rememberfit.backend.domain.statistics.dto.StudyInsightsResponseDto;
 import com.rememberfit.backend.domain.statistics.service.StatisticsService;
 import com.rememberfit.backend.domain.study.entity.StudyLog;
 import com.rememberfit.backend.domain.study.repository.StudyLogRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.rememberfit.backend.domain.user.entity.User;
+import com.rememberfit.backend.domain.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,6 +24,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
+import static com.rememberfit.backend.support.AuthTestSupport.asUser;
+import static com.rememberfit.backend.support.AuthTestSupport.createUser;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,9 +54,19 @@ class StatisticsServiceTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    private User user;
+
+    @BeforeEach
+    void createOwner() {
+        user = createUser(userRepository, "stats-owner@test.local");
+    }
+
     @Test
     void separatesNeverStudiedCardsFromScheduledReviews() {
-        Deck deck = deckRepository.save(new Deck("통계 테스트"));
+        Deck deck = deckRepository.save(new Deck("통계 테스트", user.getId()));
         LocalDate today = LocalDate.now(clock);
 
         Card newCard = new Card("새 카드", "아직 학습 전", deck);
@@ -70,7 +85,7 @@ class StatisticsServiceTest {
         cardRepository.save(dueCard);
         cardRepository.save(masteredAndDue);
 
-        StudyStatisticsResponseDto statistics = statisticsService.getStudyStatistics();
+        StudyStatisticsResponseDto statistics = statisticsService.getStudyStatistics(user.getId());
 
         assertThat(statistics.newCount()).isEqualTo(1);
         assertThat(statistics.reviewCount()).isEqualTo(2);
@@ -79,7 +94,8 @@ class StatisticsServiceTest {
 
     @Test
     void exposesStatisticsThroughDomainBasedApiPathAndCommonResponse() throws Exception {
-        mockMvc.perform(get("/api/statistics/summary"))
+        mockMvc.perform(get("/api/statistics/summary")
+                        .with(asUser(user)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("학습 통계를 불러왔어요."))
@@ -87,7 +103,8 @@ class StatisticsServiceTest {
                 .andExpect(jsonPath("$.data.reviewCount").isNumber())
                 .andExpect(jsonPath("$.data.doneCount").isNumber());
 
-        mockMvc.perform(get("/api/home/stats"))
+        mockMvc.perform(get("/api/home/stats")
+                        .with(asUser(user)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("API_PATH_NOT_FOUND"));
     }
@@ -104,7 +121,7 @@ class StatisticsServiceTest {
                 studyLog(5L, 5, today.minusDays(4), now.minusSeconds(86_400 * 4))
         ));
 
-        StudyInsightsResponseDto insights = statisticsService.getStudyInsights();
+        StudyInsightsResponseDto insights = statisticsService.getStudyInsights(user.getId());
 
         assertThat(insights.totalStudyCount()).isEqualTo(5);
         assertThat(insights.streakDays()).isEqualTo(3);
@@ -125,7 +142,7 @@ class StatisticsServiceTest {
                 studyLog(2L, 5, today.minusDays(2), now.minusSeconds(86_400 * 2))
         ));
 
-        StudyInsightsResponseDto insights = statisticsService.getStudyInsights();
+        StudyInsightsResponseDto insights = statisticsService.getStudyInsights(user.getId());
 
         assertThat(insights.streakDays()).isEqualTo(2);
     }
@@ -139,13 +156,14 @@ class StatisticsServiceTest {
                 studyLog(2L, 5, today.minusDays(3), now.minusSeconds(86_400 * 3))
         ));
 
-        StudyInsightsResponseDto insights = statisticsService.getStudyInsights();
+        StudyInsightsResponseDto insights = statisticsService.getStudyInsights(user.getId());
 
         assertThat(insights.streakDays()).isZero();
     }
 
     private StudyLog studyLog(Long cardId, int quality, LocalDate studyDate, Instant studiedAt) {
         return new StudyLog(
+                user.getId(),
                 cardId,
                 1L,
                 quality,

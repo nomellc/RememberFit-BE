@@ -24,7 +24,10 @@ class DatabaseMigrationTest {
     private Flyway flyway;
 
     @Test
-    void appliesInitialSchemaAndPassesJpaValidation() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+    void appliesEveryMigrationAndPassesJpaValidation() {
+        // 적용되지 않은 마이그레이션이 남아 있으면 안 된다.
+        assertThat(flyway.info().pending()).isEmpty();
+        // 최신 버전을 명시해 둔다. 새 마이그레이션을 추가하면 이 값을 함께 올린다.
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
     }
 }

@@ -17,12 +17,15 @@ public interface CardRepository extends JpaRepository<Card, Long> {
 
     Optional<Card> findByIdAndDeckId(Long cardId, Long deckId);
 
-    // 새 카드 개수 세기
-    long countByNextReviewDateIsNull();
+    // 카드 한 장을 소유자까지 한 번에 확인한다.
+    Optional<Card> findByIdAndDeckIdAndDeck_UserId(Long cardId, Long deckId, Long userId);
+
+    // 새 카드 개수 세기 (해당 사용자의 암기장에 속한 카드만)
+    long countByDeck_UserIdAndNextReviewDateIsNull(Long userId);
 
     // 복습 카드 개수 세기
-    long countByNextReviewDateLessThanEqual(LocalDate date);
+    long countByDeck_UserIdAndNextReviewDateLessThanEqual(Long userId, LocalDate date);
 
     // 암기 완료 카드 개수 세기
-    long countByRepetitionGreaterThanEqual(int repetition);
+    long countByDeck_UserIdAndRepetitionGreaterThanEqual(Long userId, int repetition);
 }

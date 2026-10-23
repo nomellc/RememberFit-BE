@@ -31,6 +31,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class StudyServiceTest {
+    private static final Long USER_ID = 7L;
+
     // 2026-09-28T15:30:00Z 는 Asia/Seoul 기준 2026-09-29T00:30 이다.
     private static final Clock CLOCK = Clock.fixed(
             Instant.parse("2026-09-28T15:30:00Z"),
@@ -52,10 +54,10 @@ class StudyServiceTest {
 
     @Test
     void gradesCardWithApplicationTimeZoneAndSavesStudyLog() {
-        Card card = new Card("질문", "답", new Deck("테스트"));
-        when(cardRepository.findByIdAndDeckId(10L, 20L)).thenReturn(Optional.of(card));
+        Card card = new Card("질문", "답", new Deck("테스트", USER_ID));
+        when(cardRepository.findByIdAndDeckIdAndDeck_UserId(10L, 20L, USER_ID)).thenReturn(Optional.of(card));
 
-        StudyGradeResponseDto result = studyService.gradeCard(20L, 10L, 5);
+        StudyGradeResponseDto result = studyService.gradeCard(USER_ID, 20L, 10L, 5);
 
         assertThat(result.nextReviewDate()).isEqualTo(LocalDate.of(2026, 9, 30));
         assertThat(result.intervalDays()).isEqualTo(1);
@@ -71,12 +73,12 @@ class StudyServiceTest {
 
     @Test
     void returnsDueCardsQueriedWithApplicationTimeZoneDate() {
-        Deck deck = new Deck("테스트");
-        when(deckRepository.existsById(20L)).thenReturn(true);
+        Deck deck = new Deck("테스트", USER_ID);
+        when(deckRepository.existsByIdAndUserId(20L, USER_ID)).thenReturn(true);
         when(cardRepository.findDueCards(20L, LocalDate.of(2026, 9, 29)))
                 .thenReturn(List.of(new Card("앞면1", "뒷면1", deck), new Card("앞면2", "뒷면2", deck)));
 
-        List<CardResponseDto> result = studyService.getDueCards(20L);
+        List<CardResponseDto> result = studyService.getDueCards(USER_ID, 20L);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).getFrontText()).isEqualTo("앞면1");
@@ -87,9 +89,9 @@ class StudyServiceTest {
 
     @Test
     void throwsDeckNotFoundBeforeQueryingCardsWhenDeckIsMissing() {
-        when(deckRepository.existsById(99L)).thenReturn(false);
+        when(deckRepository.existsByIdAndUserId(99L, USER_ID)).thenReturn(false);
 
-        assertThatThrownBy(() -> studyService.getDueCards(99L))
+        assertThatThrownBy(() -> studyService.getDueCards(USER_ID, 99L))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DECK_NOT_FOUND);
 
@@ -98,18 +100,18 @@ class StudyServiceTest {
 
     @Test
     void returnsEmptyListWhenDeckHasNoDueCards() {
-        when(deckRepository.existsById(20L)).thenReturn(true);
+        when(deckRepository.existsByIdAndUserId(20L, USER_ID)).thenReturn(true);
         when(cardRepository.findDueCards(20L, LocalDate.of(2026, 9, 29))).thenReturn(List.of());
 
-        assertThat(studyService.getDueCards(20L)).isEmpty();
+        assertThat(studyService.getDueCards(USER_ID, 20L)).isEmpty();
     }
 
     @Test
     void throwsDeckNotFoundWhenGradingCardInMissingDeck() {
-        when(cardRepository.findByIdAndDeckId(10L, 99L)).thenReturn(Optional.empty());
-        when(deckRepository.existsById(99L)).thenReturn(false);
+        when(cardRepository.findByIdAndDeckIdAndDeck_UserId(10L, 99L, USER_ID)).thenReturn(Optional.empty());
+        when(deckRepository.existsByIdAndUserId(99L, USER_ID)).thenReturn(false);
 
-        assertThatThrownBy(() -> studyService.gradeCard(99L, 10L, 5))
+        assertThatThrownBy(() -> studyService.gradeCard(USER_ID, 99L, 10L, 5))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DECK_NOT_FOUND);
 
@@ -118,10 +120,10 @@ class StudyServiceTest {
 
     @Test
     void throwsCardNotFoundWhenDeckExistsButCardDoesNot() {
-        when(cardRepository.findByIdAndDeckId(10L, 20L)).thenReturn(Optional.empty());
-        when(deckRepository.existsById(20L)).thenReturn(true);
+        when(cardRepository.findByIdAndDeckIdAndDeck_UserId(10L, 20L, USER_ID)).thenReturn(Optional.empty());
+        when(deckRepository.existsByIdAndUserId(20L, USER_ID)).thenReturn(true);
 
-        assertThatThrownBy(() -> studyService.gradeCard(20L, 10L, 5))
+        assertThatThrownBy(() -> studyService.gradeCard(USER_ID, 20L, 10L, 5))
                 .isInstanceOf(CustomException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CARD_NOT_FOUND);
 
@@ -130,11 +132,11 @@ class StudyServiceTest {
 
     @Test
     void doesNotQueryDeckWhenGradingSucceeds() {
-        Card card = new Card("질문", "답", new Deck("테스트"));
-        when(cardRepository.findByIdAndDeckId(10L, 20L)).thenReturn(Optional.of(card));
+        Card card = new Card("질문", "답", new Deck("테스트", USER_ID));
+        when(cardRepository.findByIdAndDeckIdAndDeck_UserId(10L, 20L, USER_ID)).thenReturn(Optional.of(card));
 
-        studyService.gradeCard(20L, 10L, 5);
+        studyService.gradeCard(USER_ID, 20L, 10L, 5);
 
-        verify(deckRepository, never()).existsById(any());
+        verify(deckRepository, never()).existsByIdAndUserId(any(), any());
     }
 }

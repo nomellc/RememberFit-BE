@@ -29,7 +29,7 @@ class Sm2CalculatorTest {
             int expectedInterval,
             double expectedEaseFactor
     ) {
-        Card card = new Card("질문", "답", new Deck("테스트"));
+        Card card = new Card("질문", "답", new Deck("테스트", 1L));
 
         Sm2Calculator.Sm2Result result = Sm2Calculator.calculate(card, quality);
 
@@ -40,7 +40,7 @@ class Sm2CalculatorTest {
 
     @Test
     void increasesIntervalAcrossSuccessfulReviews() {
-        Card card = new Card("질문", "답", new Deck("테스트"));
+        Card card = new Card("질문", "답", new Deck("테스트", 1L));
 
         apply(card, Sm2Calculator.calculate(card, 5));
         assertThat(card.getRepetition()).isEqualTo(1);
@@ -58,7 +58,7 @@ class Sm2CalculatorTest {
 
     @Test
     void resetsRepetitionAfterFailedReviewAndKeepsEaseFactorFloor() {
-        Card card = new Card("질문", "답", new Deck("테스트"));
+        Card card = new Card("질문", "답", new Deck("테스트", 1L));
         card.updateStudyStatus(4, 20, 1.4, BASE_DATE);
 
         Sm2Calculator.Sm2Result result = Sm2Calculator.calculate(card, 0);
@@ -70,7 +70,7 @@ class Sm2CalculatorTest {
 
     @Test
     void capsIntervalAtMaximum() {
-        Card card = new Card("질문", "답", new Deck("테스트"));
+        Card card = new Card("질문", "답", new Deck("테스트", 1L));
         card.updateStudyStatus(5, 300, 2.5, BASE_DATE);
 
         Sm2Calculator.Sm2Result result = Sm2Calculator.calculate(card, 5);
@@ -80,7 +80,7 @@ class Sm2CalculatorTest {
 
     @Test
     void keepsIntervalAtMaximumWithoutIntegerOverflow() {
-        Card card = new Card("질문", "답", new Deck("테스트"));
+        Card card = new Card("질문", "답", new Deck("테스트", 1L));
         card.updateStudyStatus(40, Integer.MAX_VALUE, 2.5, BASE_DATE);
 
         Sm2Calculator.Sm2Result result = Sm2Calculator.calculate(card, 5);

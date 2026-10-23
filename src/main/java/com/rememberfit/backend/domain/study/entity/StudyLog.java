@@ -14,13 +14,17 @@ import java.time.LocalDate;
         name = "study_logs",
         indexes = {
                 @Index(name = "idx_study_logs_study_date", columnList = "study_date"),
-                @Index(name = "idx_study_logs_card_id", columnList = "card_id")
+                @Index(name = "idx_study_logs_card_id", columnList = "card_id"),
+                @Index(name = "idx_study_logs_user_study_date", columnList = "user_id, study_date")
         }
 )
 public class StudyLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "card_id", nullable = false)
     private Long cardId;
@@ -50,6 +54,7 @@ public class StudyLog {
     private Instant studiedAt;
 
     public StudyLog(
+            Long userId,
             Long cardId,
             Long deckId,
             int quality,
@@ -60,6 +65,7 @@ public class StudyLog {
             LocalDate studyDate,
             Instant studiedAt
     ) {
+        this.userId = userId;
         this.cardId = cardId;
         this.deckId = deckId;
         this.quality = quality;

@@ -7,6 +7,11 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum SuccessCode {
+    SIGNED_UP(HttpStatus.CREATED, "회원가입이 완료되었어요."),
+    LOGGED_IN(HttpStatus.OK, "로그인했어요."),
+    TOKEN_REFRESHED(HttpStatus.OK, "로그인 상태를 갱신했어요."),
+    LOGGED_OUT(HttpStatus.OK, "로그아웃했어요."),
+    ME_READ(HttpStatus.OK, "내 정보를 불러왔어요."),
     DECK_CREATED(HttpStatus.CREATED, "암기장을 만들었어요."),
     DECKS_READ(HttpStatus.OK, "암기장 목록을 불러왔어요."),
     DECK_UPDATED(HttpStatus.OK, "암기장 이름을 바꿨어요."),
