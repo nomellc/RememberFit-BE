@@ -36,7 +36,7 @@ public class StudyService {
     @Transactional
     public StudyGradeResponseDto gradeCard(Long deckId, Long cardId, int quality) {
         Card card = cardRepository.findByIdAndDeckId(cardId, deckId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CARD_NOT_FOUND));
+                .orElseThrow(() -> cardLookupFailure(deckId));
         Sm2Calculator.Sm2Result result = Sm2Calculator.calculate(card, quality);
         LocalDate studyDate = LocalDate.now(clock);
         LocalDate nextReviewDate = studyDate.plusDays(result.interval());
@@ -66,5 +66,14 @@ public class StudyService {
         if (!deckRepository.existsById(deckId)) {
             throw new CustomException(ErrorCode.DECK_NOT_FOUND);
         }
+    }
+
+    // 카드 조회 실패의 원인을 구분한다. 덱 자체가 없으면 DECK_NOT_FOUND 가 맞다.
+    // 조회가 성공하는 정상 경로에서는 덱 존재 확인 쿼리를 더하지 않는다.
+    private CustomException cardLookupFailure(Long deckId) {
+        if (!deckRepository.existsById(deckId)) {
+            return new CustomException(ErrorCode.DECK_NOT_FOUND);
+        }
+        return new CustomException(ErrorCode.CARD_NOT_FOUND);
     }
 }

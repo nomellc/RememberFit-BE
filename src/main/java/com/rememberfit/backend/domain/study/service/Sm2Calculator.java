@@ -3,6 +3,9 @@ package com.rememberfit.backend.domain.study.service;
 import com.rememberfit.backend.domain.card.entity.Card;
 
 public final class Sm2Calculator {
+    // 복습 간격 상한. 상한이 없으면 성공 복습이 반복될 때 int 범위를 넘고,
+    // 이어지는 studyDate.plusDays(interval) 에서 날짜 계산이 깨진다.
+    private static final int MAX_INTERVAL_DAYS = 365;
 
     private Sm2Calculator() {
     }
@@ -18,7 +21,8 @@ public final class Sm2Calculator {
             } else if (repetition == 1) {
                 interval = 6;
             } else {
-                interval = (int) Math.round(interval * easeFactor);
+                // 캐스팅 전에 상한으로 자른다. 순서가 바뀌면 오버플로가 먼저 일어난다.
+                interval = (int) Math.min(Math.round(interval * easeFactor), MAX_INTERVAL_DAYS);
             }
             repetition++;
         } else {
